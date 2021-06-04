@@ -1,0 +1,8 @@
+main:
+  - title: "Java"
+    url: /java/
+  - title: "Others"
+    url: /others/
+  - title: "Blog"
+    url: /blog/  
+
