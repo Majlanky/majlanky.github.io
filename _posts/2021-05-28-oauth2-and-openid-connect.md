@@ -1,6 +1,10 @@
 ---
 layout: full_single
 title:  "OAuth2 and OpenId Connect"
+tagline: " "
+header:
+  overlay_image: /assets/images/hannah-mattern-AHd02RYlyic-unsplash.jpg
+  particles: true
 date:   2021-05-28 22:00:00
 words_per_minute: 70
 categories: others security

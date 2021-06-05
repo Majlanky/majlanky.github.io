@@ -5,6 +5,10 @@ date:   2021-05-11 21:15:00
 categories: others security
 author_profile: true
 classes: wide
+tagline: " "
+header:
+  overlay_image: /assets/images/faris-mohammed-d30sszrW7Vw-unsplash.jpg
+  particles: true
 ---
 Both terms are very familiar to me however I hesitate for a second every time when asked for the difference. The reason for the hesitation
 is that I am not an English native speaker and both terms are looking very similar (at least it is my excuse for myself).
