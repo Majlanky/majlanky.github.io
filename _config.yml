@@ -56,7 +56,7 @@ social:
 analytics:
   provider               : google-gtag
   google:
-    tracking_id          : G-RKM7502XQP
+    tracking_id          : UA-200527424-1
     anonymize_ip         : false
 
 
