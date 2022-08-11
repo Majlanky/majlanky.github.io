@@ -3,6 +3,7 @@ source "https://rubygems.org"
 
 gem "github-pages", "~> 214", group: :jekyll_plugins
 gem "jekyll-include-cache", group: :jekyll_plugins
+gem 'jemoji'
 
 # If you have any plugins, put them here!
 group :jekyll_plugins do
