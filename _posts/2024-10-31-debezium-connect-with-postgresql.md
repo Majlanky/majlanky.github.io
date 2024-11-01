@@ -105,7 +105,7 @@ I have learned from my mistakes and changed the solution the following way (chan
 * Every connector will track one (main) entity
 * Every connector will use its own replication slot (no other way because of how it works)
 * Every connector will define its one tightly scoped publication (filtered auto-creation by Debezium wording)
-* Every connector will use heartbeat table (together with heartbeat.action.query) that will be tracked.
+* **Every connector will use heartbeat table (together with heartbeat.action.query) that will be tracked.**
 
 #### Pitfall #2
 
