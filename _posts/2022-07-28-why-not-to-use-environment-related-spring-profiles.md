@@ -1,5 +1,5 @@
 ---
-layout: single
+layout: full_single
 title:  "Why not to use environment based spring profiles"
 tagline: " "
 header:
@@ -15,7 +15,7 @@ mermaid:
 :warning: If you are using K8s, ArgoCD and similar it probably led you to proper way already. 
 If you are just moving to K8s based environment, you can  find nifty information here. :warning:
 
-Everybody knows Spring profiles and many things was said about it specially how to use it from the technical point of view. Similarly, as 
+Everybody knows Spring profiles and many things was said about it especially how to use it from the technical point of view. Similarly, as 
 in other articles I will not be focusing on the technical point of view because I expect that you know or can find this information easily.
 What I would like to focus on is what I see very often and which makes a lot of problems more or less, sooner or later. We can list issues 
 first and then dive deeper in to the topics.
@@ -32,7 +32,7 @@ prepare configuration of app for this (local )environment. just configure it lik
 `application.yml` in resources and that's it.
 There are some reasons why:
 * The local is the first needed (it is used for development)
-* I do not know about what environments there are or will be (you can name some but who really know). To be more precise I do not want to know it...
+* I do not know about what environments there are or will be (you can name some but who really knows). To be more precise I do not want to know it...
 * Even when I am able to name some environments, Am I able to say what is the exact configuration for it? Usually not.
 * Only environment configuration I can influence and know well is the local one
 
