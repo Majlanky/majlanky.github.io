@@ -15,7 +15,9 @@ more you can pick from more implementations of CDC idea. One of the implementati
 of possible installation and setup, what we want more? Nothing and everything I say. In this post we will dive into real installation
 of Debezium connector to Kafka Connect together with Postgres. During the process I find out that I do not fully understand 
 concept of Postgres logical replication and Kafka Connect idea that makes difficult to maintain consequences of Postgres 
-and Debezium implementation when used together.
+and Debezium implementation when used together. 
+
+If you are here, because you are trying to find what is going on in your system, do not miss the [troubleshooting](#troubleshooting)
 
 ## Basics
 
@@ -131,7 +133,7 @@ connector that filters out all irrelevant messages from shared publication, does
 
 ### Real solution for a real life #4
 
-I have learned from my mistakes and changed the solution the following way (changes are highlighted by bold):
+I have learned from my mistakes again and changed the solution the following way (changes are highlighted by bold):
 * The same way we split responsibility for data across the microservices, we will split responsibility for CDC between more connectors.
   * In my case I tend to applications maintain connectors, so I can bear connector definitions together with migration scripts in a release
 * Every connector will track one (main) entity
@@ -140,10 +142,45 @@ I have learned from my mistakes and changed the solution the following way (chan
 * Every connector will filter message based on `table.include.list`
 * **Enable heartbeat for connector without action.**
 
+#### Pitfall #4
+
+Everything looks OK on the first sight (or maybe not, it depends). The issue here is that Debezium connector is not committing LSN when
+there are no changes from publication. In our case the publication is created for all tables, and it is the aspect that matters. There are
+hints (maybe for somebody it is obvious more than for me) that warns that using CDC in environment where one DB is fed a lot and second no,
+it will lead to WAL swelling (sWALing?). It is exactly because publication is DB-related, WAL is not. So when one DB is reporting changes to
+its publication(s) and publication(s) in the other DB reports nothing, replication slot related to the silent publication just blocks WAL 
+from release even with heartbeats.
+
+### Real solution for a real life #5
+
+In this scenario we will use all weapons and tools provided, and I was avoiding at the beginning but by the gradual progress I end with using
+them but in IMHO the meaningful and optimal way.
+
+* The same way we split responsibility for data across the microservices, we will split responsibility for CDC between more connectors.
+  * In my case I tend to applications maintain connectors, so I can bear connector definitions together with migration scripts in a release
+* Every connector will track one (main) entity
+* Every connector will use its own replication slot (no other way because of how it works)
+* Connectors will share one publication (all_tables by Debezium wording)
+* Every connector will filter message based on `table.include.list`
+* Enable heartbeat for connector
+* **Add heartbeat action**
+
 #### Pitfall-less?
 
-Currently, it looks pitfall-less. The last improvement changes the situation because heartbeat produce message to a topic, hence 
-connector can commit LSN. The produced message on the other hand is on top, but it is sent to different topic so no mess in CDC topic.
+Following official documentation, you can add `heartbeat.action.query`. This query should change a state of table tracked by publication.
+In our case we are using publication for all tables, which mean the query can change anything anywhere in the DB, and it will do the magic.
+To make connector independent of environment avoiding any manual preparation I designed the query the way it will create a table with generic
+name containing one column with timestamp and update this timestamp by the query. So the snippet looks like this:
+
+```json
+{
+  ...
+  "heartbeat.action.query": "CREATE TABLE IF NOT EXISTS trololo (last_heartbeat_ts TIMESTAMP); UPDATE public.debezium_heartbeat SET last_heartbeat_ts = NOW();"
+}
+```
+
+With this setting you need just generic publication in every DB that will be captured, everything else is done by connector and WAL is not
+swelling
 
 ## Conclusion
 
@@ -151,6 +188,41 @@ After reading this whole think I can share my simplification what CDC in our con
 ```
 Our CDC is translator, plugin above plugin we can say, of Postgres logical replication hence it bears all bad and good of it.
 ```
+
+## Troubleshooting
+
+Here I will just throw on you some nifty resources.
+
+```postgresql
+SELECT
+    slot_name,
+    plugin,
+    slot_type,
+    database,
+    wal_status,
+    active,
+    pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) AS data_left_to_process,
+    restart_lsn AS last_commit_lsn
+FROM pg_replication_slots;
+```
+This query will show you all replication slots and how much WAL they are blocking. It can show you if your WAL is swelling and which one 
+exactly.
+The most important info here aside the size of retained WAL are those:
+* wal_status - tells you if the WAL size is over the configured max WAL size or still under the threshold (reserved is the prior one)
+* active - if it is not active, means you consumer/subscribed died, hence nobody is here to commit LSN which would free WAL
+
+```postgresql
+SELECT *
+FROM pg_stat_replication;
+```
+Simple but very helpful. This query will show you detail how the replications goes. The important information in the result are:
+* sent_lsn - LSN that very sent to consumer
+* write_lsn - LSN that very written to/accepted by consumer
+* flush_lsn - LSN was replicated to the consumer WAL
+* replay_lsn - LSN that very committed to consumer
+
+Especially when flush and replay LSN is missing, it means that your connector is not commiting LSN. It happens for example in the described
+[case](#pitfall-4) 
 
 ## Some other tricky part I hit
 
