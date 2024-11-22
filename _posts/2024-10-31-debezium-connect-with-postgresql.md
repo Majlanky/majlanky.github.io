@@ -175,7 +175,7 @@ name containing one column with timestamp and update this timestamp by the query
 ```json
 {
   ...
-  "heartbeat.action.query": "CREATE TABLE IF NOT EXISTS trololo (last_heartbeat_ts TIMESTAMP); UPDATE public.debezium_heartbeat SET last_heartbeat_ts = NOW();"
+  "heartbeat.action.query": "CREATE TABLE IF NOT EXISTS public.debezium_heartbeat (last_heartbeat_ts TIMESTAMP); UPDATE public.debezium_heartbeat SET last_heartbeat_ts = NOW();"
 }
 ```
 
@@ -193,7 +193,7 @@ Our CDC is translator, plugin above plugin we can say, of Postgres logical repli
 
 Here I will just throw on you some nifty resources.
 
-```postgresql
+```sql
 SELECT
     slot_name,
     plugin,
@@ -211,7 +211,7 @@ The most important info here aside the size of retained WAL are those:
 * wal_status - tells you if the WAL size is over the configured max WAL size or still under the threshold (reserved is the prior one)
 * active - if it is not active, means you consumer/subscribed died, hence nobody is here to commit LSN which would free WAL
 
-```postgresql
+```sql
 SELECT *
 FROM pg_stat_replication;
 ```
